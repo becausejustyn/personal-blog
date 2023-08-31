@@ -2,17 +2,33 @@ project:
   type: website
 
 website:
-  title: "personal-blog"
+  title: "becausejustyn"
+  repo-url: "https://github.com/becausejustyn/personal-blog"
+  description: "This is my personal blog."
   navbar:
+    title: false
+    background: primary
+    search: true
+    left:
+      - text: "{{< fa newspaper >}} Blog"
+        href: index.qmd
+      #- text: "{{< fa house-user >}} Home" 
+      #  href: about.qmd
     right:
-      - about.qmd
+      - text: "{{< fa house-user >}} About" 
+        href: about.qmd
       - icon: github
-        href: https://github.com/
+        href: https://github.com/becausejustyn
       - icon: twitter
-        href: https://twitter.com
+        href: https://twitter.com/becausejustyn
+      - icon: linkedin
+        href: https://www.linkedin.com/in/justyn-rodrigues-6b2612231/
+      
 format:
   html:
-    theme: cosmo
+    theme: 
+      light: flatly # [flatly, custom.scss]
+      dark: darkly # [darkly, custom-dark.scss]
     css: styles.css
 
 
