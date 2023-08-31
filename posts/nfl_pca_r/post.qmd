@@ -1,0 +1,395 @@
+---
+title: NFL PCA w/ R
+date: '2022-07-04'
+date-modified: '2022-07-08'
+categories: ['R', 'NFL']
+description: 'Comparing the different NFL WR.'
+execute: 
+  message: false
+  warning: false
+---
+
+Doing a PCA in R is quite easy, but visualising the results can be a challenge. I am going to demonstrate it with NFL data just to add some complexity to it. I wont write much on this post due to time constraints, however, most of the code is commented well enough.
+
+```{r}
+#| warning: false
+library(tidyverse)
+library(broom)
+library(gt)
+library(ggrepel)
+```
+
+How you load the data depends if you want to use the package `nflfastR` or not. While it has many useful features, you may not want to use it if you already have the data saved that you want to use.
+
+```{r include=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for white_theme"
+white_theme <- function(base_size = 12, font = "Lato") {
+
+  ### Palette
+
+  # http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/#a-colorblind-friendly-palette
+  cb_palette <- c(
+    "#000000", "#E69F00", "#56B4E9", "#009E73",
+    "#F0E442", "#0072B2", "#D55E00", "#CC79A7"
+  )
+
+  # https://www.color-hex.com/color-palette/74767
+  tom_palette <- c("#003399", "#ff2b4f", "#3686d3", "#FCAB27", "#88398a")
+
+  # murdoch theme https://gist.github.com/johnburnmurdoch/bd20db77b2582031604ccd1bdc4be582
+  ft_palette <- c("#00218D", "#FF2B4F", "#0083EB", "#FCAB27", "#FF49EF")
+
+  # colour pieces
+  scale_fill_cb <- function() {
+    structure(list(ggplot2::scale_fill_manual(values = cb_palette)))
+  }
+  scale_colour_discrete_cb <- function() {
+    structure(list(ggplot2::scale_colour_manual(values = cb_palette)))
+  }
+  scale_color_continuous_cb <- function() {
+    structure(list(ggplot2::scale_color_gradientn(colours = cb_palette)))
+  }
+
+  # Text Setting
+  txt <- ggplot2::element_text(
+    size = base_size + 2, colour = "black",
+    face = "plain"
+  )
+  bold_txt <- ggplot2::element_text(
+    size = base_size + 2, colour = "black",
+    family = "Montserrat", face = "bold"
+  )
+  large_txt <- ggplot2::element_text(
+    size = base_size + 4, color = "black",
+    face = "bold"
+  )
+  ggplot2::theme_minimal(base_size = base_size, base_family = font) +
+    ggplot2::theme(
+      # Legend Settings
+      legend.key = element_blank(),
+      legend.background = element_blank(),
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      legend.box = "vertical",
+      # Backgrounds
+      strip.background = element_rect(),
+      plot.background = element_rect(),
+      plot.margin = unit(c(1, 1, 1, 1), "lines"),
+      # Axis & Titles
+      text = txt, axis.text = txt,
+      axis.ticks = element_blank(),
+      axis.line = element_blank(),
+      axis.title = bold_txt,
+      plot.title = large_txt,
+      # Panel
+      panel.grid = element_line(colour = NULL),
+      panel.grid.major = element_line(colour = "#D2D2D2"),
+      panel.grid.minor = element_blank()
+    )
+}
+```
+
+::: panel-tabset
+## Using nflfastR
+
+```{r}
+#| eval: false
+players <- nflfastR::load_player_stats(2021)
+rosters <- nflfastR::fast_scraper_roster(2021)
+pbp <- nflfastR::load_pbp(2021)
+```
+
+It is worth noting that you can get multiple seasons at once using this method. E.g. `nflfastR::load_player_stats(2020:2021)`.
+
+## Without nflfastR
+
+```{r}
+#| eval: false
+
+# if you have the data saved locally
+df <- purrr::map_df(c(2010:2020), function(x) {
+  readRDS(
+    glue::glue("~/Documents/nfl/data/pbp/play_by_play_{x}.rds")
+  )
+})
+
+# if you do not have it saved locally
+df <- purrr::map_df(c(2010:2020), function(x) {
+  readRDS(
+    glue::glue("https://raw.githubusercontent.com/guga31bb/nflfastR-data/master/data/play_by_play_{x}.rds")
+  )
+})
+```
+
+I thought it was worth showing because this was a trick that I found quite useful once I discovered it. I have used it countless times for similar tasks. By using `glue()`, you can map across the values like an f string in Python.
+:::
+
+```{r}
+#| eval: false
+pbp_wr <- pbp |>
+  mutate(
+    # if they caught the ball in the middle of the field, 
+    # assign 0 otherwise, assign 1 
+    outside_pass = ifelse(pass_location != "middle", 1, 0),
+    pass_air_yards = ifelse(is.na(air_yards), 0, air_yards),
+    pass_air_yards = ifelse(ydstogo <= 10, pass_air_yards, NA)
+  ) |>
+  # rec id is a bit of a hack to keep that value
+  group_by(receiver_id, fantasy_id) |>
+  summarise(
+    rec = sum(complete_pass),
+    air_yards = mean(pass_air_yards, na.rm = TRUE),
+    yards_per_target = mean(yards_gained, na.rm = TRUE),
+    yards_after_catch = mean(yards_after_catch, na.rm = TRUE),
+    td_rate = mean(pass_touchdown),
+    outside_rec = mean(outside_pass, na.rm = TRUE),
+    dist_from_sticks = mean(pass_air_yards - ydstogo, na.rm = TRUE),
+    # first down percentage
+    first_down = mean(first_down, na.rm = TRUE)
+  ) |>
+  # so you don't get random players like a QB
+  filter(rec > 25) |>
+  left_join(
+    pbp |>
+      count(receiver_id, fantasy_id, receiver, posteam) |>
+      group_by(receiver_id) |>
+      arrange(-n) |>
+      # this will keep the first instance of a player
+      # this is to add players non-numerical values
+      mutate(rn = row_number()) |>
+      filter(rn == 1) |>
+      select(-n, -rn)) |>
+  relocate(receiver, .before = rec) |> 
+  # this second join is to add the players position
+  # here we are using the gsid, which is why
+  # we wanted the fantasy id before
+  left_join(
+    select(rosters, position, gsis_id), by = c('fantasy_id' = 'gsis_id')
+  ) |>
+  filter(position %in% c('WR', 'TE')) |>
+  # good practice to ungroup at the end
+  ungroup()
+```
+
+If the dataset is large enough, you may get timeout errors, if that is the case, you can seperate the second `left_join()` into a seperate call, e.g.
+
+```{r}
+#| eval: false
+#| code-fold: true
+#| code-summary: "Show the code"
+pbp_wr <- pbp |>
+  mutate(
+    outside_pass = ifelse(pass_location != "middle", 1, 0),
+    pass_air_yards = ifelse(is.na(air_yards), 0, air_yards),
+    pass_air_yards = ifelse(ydstogo <= 10, pass_air_yards, NA)
+  ) |>
+  group_by(receiver_id, fantasy_id) |>
+  summarise(
+    rec = sum(complete_pass),
+    air_yards = mean(pass_air_yards, na.rm = TRUE),
+    yards_per_target = mean(yards_gained, na.rm = TRUE),
+    yards_after_catch = mean(yards_after_catch, na.rm = TRUE),
+    td_rate = mean(pass_touchdown),
+    outside_rec = mean(outside_pass, na.rm = TRUE),
+    dist_from_sticks = mean(pass_air_yards - ydstogo, na.rm = TRUE),
+    first_down = mean(first_down, na.rm = TRUE)
+  ) |>
+  filter(rec > 25) |>
+  left_join(
+    pbp |>
+      count(receiver_id, fantasy_id, receiver, posteam) |>
+      group_by(receiver_id) |>
+      arrange(-n) |>
+      mutate(rn = row_number()) |>
+      filter(rn == 1) |>
+      select(-n, -rn)) |>
+  relocate(receiver, .before = rec) 
+
+pbp_wr <- pbp_wr |> 
+  left_join(
+    select(rosters, position, gsis_id), by = c('fantasy_id' = 'gsis_id')
+  ) |>
+  filter(position %in% c('WR', 'TE')) |>
+  ungroup()
+```
+
+```{r}
+#| echo: false
+#| warning: false
+pbp_wr <- read_csv('wr_stats_2022.csv')
+```
+
+This is the resulting dataframe. To run a PCA we only want the numeric columns, however, we will be using the character columns for visualising at a later step.
+
+```{r}
+#| column: screen
+pbp_wr |>
+  gt() |>
+  tab_options(container.height = '300px')
+```
+
+```{r}
+pca_fit <- pbp_wr |>
+  # only keep numerical columns
+  select(where(is.numeric)) |> 
+  # scale data
+  scale() |> 
+  # PCA
+  prcomp() 
+
+pca_fit
+```
+
+::: column-margin
+Instead of calling `scale()`, there is an option to have `prcomp()` scale the data via `prcomp(scale = TRUE)`.
+:::
+
+```{r}
+#| column: page
+
+# helper for the axis labels
+importance <- pca_fit |> 
+  tidy(matrix = "eigenvalues") |> 
+  filter(PC %in% c(1, 2)) |> 
+  pull(percent) |> 
+  round(3)
+
+pca_fit |>
+  # add original dataset back in
+  augment(pbp_wr) |> 
+  ggplot(aes(
+    .fittedPC1, 
+    .fittedPC2, 
+    colour = position)) + 
+  geom_point(size = 1.5) +
+  labs(
+    x = paste0('PC1 (Accounts for ', importance[[1]]*100, '% of Variance)'), 
+    y = paste0('PC2 (Accounts for ', importance[[2]]*100, '% of Variance)') 
+    ) +
+  white_theme()
+```
+
+To look how the different features contribute to each component, we can do:
+
+```{r}
+#| column: page
+pca_fit |>
+  tidy(matrix = "rotation") |>
+  pivot_wider(
+    names_from = "PC", 
+    names_prefix = "PC", 
+    values_from = "value") |>
+  gt() |>
+  tab_options(container.height = '500px')
+```
+
+```{r}
+# define arrow style for plotting
+arrow_style <- arrow(
+  angle = 20, 
+  ends = "first", 
+  type = "closed", 
+  length = grid::unit(8, "pt")
+  )
+```
+
+```{r}
+# plot rotation matrix
+pca_fit |>
+  tidy(matrix = "rotation") |>
+  pivot_wider(
+    names_from = "PC", 
+    names_prefix = "PC", 
+    values_from = "value") |>
+  ggplot(aes(PC1, PC2)) +
+  scale_color_brewer(palette = "Accent", direction = 1) + 
+  geom_segment(
+    aes(colour = column),
+    xend = 0, 
+    yend = 0, 
+    arrow = arrow_style) +
+  geom_text_repel( 
+    aes(label = column, colour = column),
+    hjust = 1, 
+    nudge_x = -0.02
+  ) +
+  scale_x_continuous(limits = c(-1, 1)) + 
+  scale_y_continuous(limits = c(-1, 1)) +
+  white_theme() +
+  theme(legend.position = "none")
+```
+
+I used a dark theme for this plot because of the different colours used for the components.
+
+```{r}
+pca_fit |>
+  tidy(matrix = "eigenvalues") |>
+  gt() |>
+  tab_options(container.height = '500px')
+```
+
+Likewise, to see how many components to use, we can look at the cumulative explained variance. 
+
+```{r}
+pca_fit |>
+  tidy(matrix = "eigenvalues") |>
+  ggplot(aes(PC, percent)) +
+  geom_col(fill = "#56B4E9", alpha = 0.8) +
+  scale_x_continuous(breaks = 1:8) +
+  scale_y_continuous(
+    breaks = seq(0, 0.40, 0.05),
+    labels = scales::percent_format(), 
+    expand = expansion(mult = c(0, 0.01))
+  ) +
+  white_theme()
+```
+
+### Update
+
+I thought it might be fun to add an example of a 3D plot of the components. For this I will use `plotly`. It is one of the more interactive friendly visualisation tools, and from my experience the code is very similar from `Python` to `R`. If you are not too familiar with Python, writing this code may feel awkward. However, I think it is quite useful to get familiar with it because I can easily use plotly in Python without having to change much at all.
+
+```{r}
+#| warning: false
+
+library(plotly)
+
+# making a seperate df will simplify plotly creation
+pca_df <- pca_fit |>
+  augment(pbp_wr)
+
+fig <- plot_ly(
+  pca_df, 
+  x = ~.fittedPC1, 
+  y = ~.fittedPC2, 
+  z = ~.fittedPC3, 
+  color = ~position, 
+  colors = c('#386cb0', '#beaed4'), 
+  text = ~receiver)
+
+fig <- fig |> 
+  add_markers()
+
+fig <- fig |> 
+  layout(scene = list(
+    xaxis = list(title = 'PC1'),
+    yaxis = list(title = 'PC2'),
+    zaxis = list(title = 'PC3')
+    ))
+```
+
+```{r}
+#| column: page
+
+fig
+```
+
+That is all for now. I have a few more similar posts saved in my draft, so they should be on here soon (within the next six months).
+
+::: {.callout-caution collapse="true"}
+## Session Info
+
+```{r}
+sessionInfo()
+```
+:::

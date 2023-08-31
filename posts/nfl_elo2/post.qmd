@@ -1,0 +1,195 @@
+---
+title: NFL Elo Code
+date: '2023-08-30'
+date-modified: '2023-08-31'
+categories: ['Python', 'NFL', 'R']
+description: 'Implementing Elo with code.'
+execute: 
+  message: false
+  warning: false
+---
+
+Continuing from the previous post on calculating Elo, here is a quick implementation with code.
+
+```{r include=FALSE}
+library(tidyverse)
+df <- read_csv('elo_ratings.csv')
+```
+
+Imports are pretty standard.
+
+```python
+import numpy as np
+import pandas as pd
+from datetime import datetime
+import pyarrow.dataset as ds
+import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score
+
+plt.style.use('ggplot')
+# scientific notation off
+np.set_printoptions(suppress = True)
+pd.set_option('display.max_columns', None)
+pd.options.display.float_format = '{:.2f}'.format
+
+DATA_PATH = '../../Documents/nfl/data/pbp'
+# do not need all 366 columns
+DATA_COLS = ['game_id', 'season', 'home_team', 'away_team', 'season_type', 'week', 'game_date', 'home_score', 'away_score', 'result']
+
+# correct name changes
+replace_dict = {
+    'SD': 'LAC',
+    'OAK': 'LV',
+    'STL': 'LA'
+}
+
+dataset = ds.dataset(DATA_PATH, format = 'parquet')
+df = (
+    dataset
+    .to_table(columns = DATA_COLS)
+    .to_pandas()
+    .drop_duplicates(subset = ['game_id'])
+    .reset_index(drop = True)
+    .replace({'home_team': replace_dict, 'away_team': replace_dict})
+    .assign(home_win = lambda x: np.where(x['home_score'] > x['away_score'], 1, 0))
+    )
+
+# elo functions
+def calculate_expected_score(home_team_rating, away_team_rating, hfa=False):
+    if hfa:
+        home_team_rating += 40
+    return 1 / (1 + 10 ** ((home_team_rating - away_team_rating) / 400))
+
+def calculate_new_rating(team_rating, observed_score, expected_score, k=20):
+    return team_rating + k * (observed_score - expected_score)
+```
+
+First we want to loop through each season to calculate the Elo ratings, then for the next season, regress the elo rating per the previous post. 
+
+```python
+elo_ratings_dict = {}
+
+# Initialize ELO ratings for the first season
+initial_elo_ratings = pd.DataFrame({
+    'team': sorted(df['home_team'].unique().tolist()),
+    'elo_rating': 1500,  # Starting ELO rating for all teams
+    'season': df['season'].min(),  # Set to the first season in your dataset
+    'week': 0
+})
+
+for season in df['season'].unique():
+    df_season = df.query('season == @season').sort_values('game_date', ascending=True).reset_index(drop=True)
+    
+    elo_ratings = initial_elo_ratings.copy()  # Initialize ELO ratings for the current season
+    
+    if season > df['season'].min():
+        prev_season = season - 1
+        elo_ratings['elo_rating'] = elo_ratings_dict[(prev_season, df_season['week'].min())]['elo_rating'] * 2/3 + 1500 * 1/3
+    
+    for week in df_season['week'].unique():
+        df_week = df_season[df_season['week'] == week]
+
+        for game_i in range(df_week.shape[0]):
+            # Get data for the current game
+            home_team = df_week.iloc[game_i]["home_team"]
+            away_team = df_week.iloc[game_i]["away_team"]
+            home_score = df_week.iloc[game_i]["home_win"]
+            game_week = df_week.iloc[game_i]["week"]
+            game_season = df_week.iloc[game_i]["season"]
+
+            # Get the ratings for each team
+            home_rating = elo_ratings.query('team == @home_team').iloc[0]['elo_rating']
+            away_rating = elo_ratings.query('team == @away_team').iloc[0]['elo_rating']
+
+            # Calculate the expected score
+            expected_home_score = calculate_expected_score(home_rating, away_rating, hfa=False)
+            expected_away_score = 1 - expected_home_score
+
+            # Calculate the new ratings
+            new_home_rating = calculate_new_rating(home_rating, home_score, expected_home_score)
+            new_away_rating = calculate_new_rating(away_rating, 1 - home_score, expected_away_score)
+
+            # Update the ratings in the DataFrame for the current game
+            elo_ratings.loc[elo_ratings['team'] == home_team, 'elo_rating'] = new_home_rating
+            elo_ratings.loc[elo_ratings['team'] == away_team, 'elo_rating'] = new_away_rating
+
+            # Update the week and season for the teams
+            elo_ratings.loc[elo_ratings['team'] == home_team, 'season'] = game_season
+            elo_ratings.loc[elo_ratings['team'] == home_team, 'week'] = game_week
+            elo_ratings.loc[elo_ratings['team'] == away_team, 'season'] = game_season
+            elo_ratings.loc[elo_ratings['team'] == away_team, 'week'] = game_week
+
+            # to add the values to the original df
+            df.loc[(df['season'] == season) & (df['week'] == week) & (df['home_team'] == home_team), 'home_elo_rating'] = elo_ratings.query('team == @home_team')['elo_rating'].values[0]
+            df.loc[(df['season'] == season) & (df['week'] == week) & (df['away_team'] == away_team), 'away_elo_rating'] = elo_ratings.query('team == @away_team')['elo_rating'].values[0]
+
+        elo_ratings_dict[(season, week)] = elo_ratings.copy()
+    
+    initial_elo_ratings = elo_ratings.copy()
+```
+
+Then calculating the accuracy.
+
+```python
+df = df.assign(
+    elo_pred = lambda x: calculate_expected_score(x['away_elo_rating'], x['home_elo_rating'], hfa=False),
+    elo_pred_team = lambda x: np.where(x['elo_pred'] > 0.5, x['home_team'], x['away_team']),
+    winning_team = lambda x: np.where(x['home_win'] == 1, x['home_team'], x['away_team'])
+)
+
+y = df['winning_team']
+y_hat = df['elo_pred_team']
+
+print(f'Elo Accuracy: {accuracy_score(y, y_hat) * 100:.2f}%')
+```
+
+```{r echo=FALSE}
+calculate_expected_score <- function(home_team_rating, away_team_rating){
+  return( 1 / (1 + 10^((home_team_rating - away_team_rating) / 400)))
+}
+
+df <- df |>
+  mutate(
+    elo_pred = calculate_expected_score(away_elo_rating, home_elo_rating),
+    elo_pred_team = ifelse(elo_pred > .5, home_team, away_team),
+    winning_team = ifelse(home_win == 1, home_team, away_team)
+  )
+
+y = df['winning_team']
+y_hat = df['elo_pred_team']
+
+accuracy <- sum(y == y_hat) / nrow(y)
+
+paste('Elo Accuracy:', sprintf("%.2f%%", accuracy * 100))
+```
+
+Then visualise the accuracy by season.
+
+```python
+accuracy_df = (
+    df
+    .groupby('season')
+    .apply(lambda x: accuracy_score(x['winning_team'], x['elo_pred_team']) * 100)
+    .reset_index()
+    .rename(columns = {0: 'accuracy'})
+)
+
+years = range(1999, 2022, 1)
+year_lst = [datetime(year, 1, 1).strftime("'%y") for year in years]
+
+plt.figure(figsize = (8, 4))
+
+plt.plot(accuracy_df['season'], accuracy_df['accuracy'], marker = 'o', color = '#2ca25f')
+plt.axhline(accuracy_df['accuracy'].mean(), color = 'black', linestyle = '--')
+plt.xticks(years, year_lst)
+plt.title('\n Dotted Line = Average Accuracy')
+plt.suptitle('Elo Accuracy by Season')
+plt.xlabel('Season')
+plt.ylabel('Accuracy (%)')
+plt.savefig('elo_accuracy.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
+```
+
+![Figure](elo_accuracy.png){fig-align="center" width="1200"}
+
+This is why I like Elo so much. Only by using the two scores from each game you are able to achieve around $75\%$ accuracy. Accounting for the home team can bring it close to $79\%$ too. While there may be more complex methods that produce better results, I like to use Elo as an example that sometimes a simple model can achieve fairly good results.

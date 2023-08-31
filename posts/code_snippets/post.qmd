@@ -1,0 +1,94 @@
+---
+title: Code Snippets
+date: '2022-09-07'
+date-modified: '2022-02-24'
+categories: ['R', 'Python', 'Command Line']
+description: 'Code snippets.'
+execute: 
+  message: false
+  warning: false
+editor_options: 
+  chunk_output_type: console
+---
+
+This is a post where I have some snippets of code that I find useful, but did not want to dedicate an entire post to them.
+
+## Create Folder and File Inside
+
+Say you want to create a new folder and then create an item inside that newly created folder. This is the line I use when creating a new directory for my blog. First this creates a new folder with `mkdir`, then `touch` allows me to create a new file type in the specified path. `touch` can be used for any file type, so this becomes quite useful for other tasks too.
+
+```bash
+mkdir -p posts/code_snippets && touch posts/code_snippets/post.qmd
+```
+
+## Create Folders w/ Looping
+
+At the start of every semester I liked to make a folder for each week. Instead of manually created a folder for each week, you can use a for loop using the command line, e.g. 
+
+```bash
+for i in {1..10}; do mkdir "Week $i"; done
+```
+
+Will make 10 folders from `Week 1` to `Week 10`. Changing the values or name of the string obviously can change this. 
+
+Likewise, in python or r:
+
+::: panel-tabset
+## R
+
+```r
+for (i in 1:10) {
+  dir.create(paste('Week', i))
+}
+```
+
+## Python
+
+```python
+import os
+
+for i in range(1, 11):
+    os.mkdir(f'Week {i}')
+```
+:::
+
+## Resizing Images
+
+In this example I had a dataset of 100,000 images, which was 32GB. It was large for what I wanted to do, so I wrote a script to resize all the images and save them into a new folder. 
+
+I tested it on 100 images, which took 5 seconds to run and the folder size went from 30.5MB to 8.7MB after I resized the images from 512 by 512 to 256 by 256.
+
+::: {.column-margin}
+This can also be done with the command line and R, but most of the times I want to resize images I am already using python, so there is no need to complicate the task. 
+:::
+
+```python
+import os
+from PIL import Image
+
+new_width, new_height = 256, 256
+
+# location of the images
+source_folder = 'dataset_100/'
+# folder where we want to save the resized images
+destination_folder = 'resized_256/'
+# creates a list of every file in the source folder
+directory = os.listdir(source_folder)
+
+# for every image in the source folder    
+for item in directory:
+    # if the file does not end with _seg & is a jpg file
+    if item.endswith(".png") and '_seg' not in item:
+        # open the image and assign it to the variable img
+        img = Image.open(source_folder + item)
+        # resize the image using the above dimensions
+        imgResize = img.resize((new_width, new_height))
+        # save the resized image to the destination folder
+        imgResize.save(destination_folder + item[:-4] +'.png', quality = 90)
+```
+
+You can also do this with command line, but at this point, I do not find it quicker. 
+
+```bash
+find dataset_100 -type f -name '*.png' ! -name '*_seg*' -exec bash -c 'mkdir -p resized_256; convert "{}" -resize 256x256 "resized_256/$(basename "{}" .png)_resized.png"' \;
+```

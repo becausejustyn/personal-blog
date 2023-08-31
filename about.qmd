@@ -1,6 +1,5 @@
 ---
 title: "Justyn Rodrigues"
-
 about:
   template: jolla
   image: profile_pic.jpeg
