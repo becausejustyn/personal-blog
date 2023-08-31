@@ -2,6 +2,11 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/nfl_elo2/post.html",
+      "/posts/nfl_elo1/post.html",
+      "/posts/nfl_pca_python/post.html",
+      "/posts/code_snippets/post.html",
+      "/posts/nfl_pca_r/post.html",
       "/posts/ggplot_colour_text/post.html",
       "/posts/combinations/post.html",
       "/posts/barplots/post.html"
