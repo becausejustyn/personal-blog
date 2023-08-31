@@ -1,19 +1,25 @@
 ---
-title: "About"
-image: profile.jpg
+title: "Justyn Rodrigues"
+
 about:
   template: jolla
+  image: profile_pic.jpeg
   links:
     - icon: twitter
       text: Twitter
-      href: https://twitter.com
+      href: https://twitter.com/becausejustyn
     - icon: linkedin
       text: LinkedIn
-      href: https://linkedin.com
+      href: https://www.linkedin.com/in/justyn-rodrigues-6b2612231/
     - icon: github
-      text: Github
-      href: https://github.com
+      text: Github 
+      href: https://github.com/becausejustyn
 
 ---
 
-About this blog
+Some text here.
+
+::: {.callout-note}
+## Just keep in mind
+As I have started learning how to make blogs and the front-end side of it, I have made many errors with my blog so there might be a few things broken at the moment. If you notice an problem, feel free to [create an issue](https://github.com/becausejustyn/personal-blog/issues/new) on the {{< fa brands github >}} repo. Thanks!
+:::

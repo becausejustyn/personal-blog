@@ -1,0 +1,216 @@
+---
+title: Barplots
+date: '2021-02-11'
+date-modified: '2022-02-24'
+categories: ['R', 'Data Viz']
+description: 'Some different ways you can adjust barplots.'
+execute: 
+  message: false
+  warning: false
+editor_options: 
+  chunk_output_type: console
+---
+
+::: callout-note
+I have currently commented out my custom theme since I have not set up custom fonts yet on this computer.
+:::
+
+I have been planning on writing a post for a few weeks, but I keep changing my mind on what I want to write about. I have been going through my Github profile lately and tidying it up. It has made me realise how much code I had stashed away that I did not need, so I am trying to get into the habit of only keeping code that is available on Github to keep organised and accountable.
+
+I have also been doing a lot of NFL data viz, which I found a lot harder than I thought it would be. I'll share them at a later date, but I thought I would do a quick post at 11pm at some tricks I learnt with using text labels. I thought I would use the penguins dataset from `palmerpenguins` since it does not appear to be as common as others such as `mtcars`.
+
+```{r}
+library(palmerpenguins)
+library(tidyverse)
+
+# personal package with plotting theme. 
+# I wrote it at the start of 2021, so it might have some issues
+#library(becausejustynfun) 
+
+penguins <- palmerpenguins::penguins
+```
+
+Even though I am using the cleaned version, I find it good practice to use `glimpse()` just to be safe.
+
+```{r}
+penguins |> glimpse()
+```
+
+Next, I am checking for missing values.
+
+```{r}
+#penguins |>
+#  summarise(across(everything(), ~sum(is.na(.))))
+
+penguins |> map_dbl(~sum(is.na(.)))
+```
+
+To see how I will deal with them I like to see the unique values across each column.
+
+```{r}
+#penguins |>
+#  summarise(across(everything(), n_distinct))
+
+penguins |> 
+  map_dbl(~n_distinct(.))
+```
+
+I'll have a glance at the missing values to see if they are important.
+
+```{r}
+penguins |> 
+  filter(if_any(everything(), is.na)) 
+```
+
+Given the `NA` values were low, I will just drop them.
+
+```{r}
+penguins <- penguins |>
+  na.exclude()
+
+#to check
+map_dfc(penguins, sum(is.na(penguins)))
+#map_df(penguins, .f = sum(is.na(penguins)))
+```
+
+I am going to create a seperate df with the count values. You can easily just use `add_count()`, or just rely on `ggplot2` to do that for you, but later on we are going to make more adjustments to the df that will make it easier if there is a mistake.
+
+```{r}
+#df of counts
+penguins_sum <- penguins |>
+  count(species, sort = TRUE) |> 
+  mutate(
+    species = fct_rev(fct_inorder(species)),
+    perc = paste0(sprintf("%4.1f", n / sum(n) * 100), "%") # percentage label
+    )
+
+#scales alternative
+#mutate(perc = scales::percent(n / sum(n), accuracy = .1, trim = FALSE))
+```
+
+```{r}
+penguins_sum |>
+ggplot(aes(x = n, y = species)) +
+  geom_col(fill = "gray70") +
+  ## add percentage labels
+  geom_text(aes(label = perc)) 
+```
+
+```{r}
+## prepare non-aggregated data set with lumped and ordered factors
+penguins_fct <- penguins |> 
+  dplyr::mutate(
+    total = dplyr::n(),
+    species = stringr::str_to_title(species),
+    species = forcats::fct_rev(forcats::fct_infreq(species))
+  )
+
+penguins_sum <- penguins_sum |> 
+  mutate(
+    colour = case_when(
+      row_number() == 1 ~ "#468499",
+      row_number() == 2 ~ "#E697AC",
+      row_number() == 3 ~ "#81CDE6",
+      ## all others should be gray
+      TRUE ~ "gray70"
+    )
+  )
+```
+
+This is one approach were we conditionally colour each variable of choice.
+
+```{r}
+penguins_sum |>
+  ggplot(aes(
+    x = n, 
+    y = species, 
+    fill = colour)) +
+  geom_col() +
+  geom_text(
+    aes(label = perc),
+    hjust = 1, nudge_x = -.5
+  ) +
+  ## add custom colors
+  scale_fill_identity(guide = "none") 
+```
+
+We also have a lot of control over the font used. There can be challenges when installing a font onto your system for the first time, but I might go through that another time since I struggled with it for quite a while. Maybe I am just a silly billy.
+
+```{r}
+penguins_sum |>
+ggplot(aes(
+  x = n, 
+  y = species, 
+  fill = colour)) +
+  geom_col() +
+  geom_text(
+    aes(label = perc), 
+    hjust = 1, nudge_x = -.5,
+    size = 4, fontface = "bold"
+  ) +
+  ## reduce spacing between labels and bars
+  scale_x_continuous(expand = c(.01, .01)) +
+  scale_fill_identity(guide = "none") 
+```
+
+Sometimes the colour of the font does not match well with the plot. This can be challenging when you have more than a few colours, so you might not want to manually adjust every single one. One option is to add white to the label with `fill = "white"`.
+
+```{r}
+penguins_sum |>
+  ggplot(aes(
+    x = n, 
+    y = species, 
+    fill = colour)) +
+  geom_col() +
+  geom_label(
+    aes(label = perc), 
+    hjust = 0.95, nudge_x = -.5,
+    size = 4, fontface = "bold",
+    ## turn into white box without outline
+    fill = "white", label.size = 0
+  ) +
+  scale_x_continuous(expand = c(.01, .01)) +
+  scale_fill_identity(guide = "none") +
+  theme(
+    axis.text.y = element_text(size = 14, hjust = 1),
+    plot.margin = margin(rep(15, 4))
+  )
+```
+
+Likewise, it is possible to adjust the position of the text labels conditionally. I think `ggplot2` biggest challenge is learning what you can do.
+
+```{r}
+penguins_sum |> 
+  mutate(
+    ## set justification based on data 
+    ## so that only the first label is placed inside
+    place = if_else(row_number() == 1, 1, 0),
+    ## add some spacing to labels since we cant use nudge_x anymore
+    perc = paste(" ", perc, " ")
+  ) |> 
+  ggplot(aes(
+    x = n, 
+    y = species, 
+    fill = colour)) +
+  geom_col() +
+  geom_text(
+    aes(label = perc, hjust = place), 
+    fontface = "bold"
+  ) +
+  scale_x_continuous(expand = c(.01, .01)) +
+  scale_fill_identity(guide = "none") +
+  theme(
+    plot.margin = margin(rep(15, 4))
+  )
+```
+
+You can use different positions of text labels to highlight things of interest, or sometimes adjusting it makes it easier to work around other features of the plot such as the background or legend.
+
+That is all for today. I'll try to post next week about more data viz.
+
+::: {.callout-tip collapse="true"}
+## Session Info
+```{r}
+sessionInfo()
+```
+:::

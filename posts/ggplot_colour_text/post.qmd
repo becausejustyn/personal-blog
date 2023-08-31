@@ -1,0 +1,114 @@
+---
+title: "Colouring Text in ggplot2"
+date: "2022-03-26"
+categories: ['R', 'ggplot']
+description: 'How to colour text in ggplot.'
+execute: 
+  message: false
+  warning: false
+  freeze: true
+---
+
+One of the more underrated options in data viz is to colour text. You can use this to highlight important information, or to improve how the viz looks. It is quite simple with `ggtext`, so I will not go into too much detail.
+
+```{r}
+#| warning: false
+library(tidyverse)
+library(ggtext) 
+library(grid)
+library(glue)
+```
+
+I originally wrote this post at 10pm before bed, so I used `mtcars` to allow myself to get this done quickly. To have the colour applied to the text, you need to specify `element_markdown()` in the `theme()` function.
+
+```{r}
+mtcars |>
+  ggplot(aes(
+    x = wt, 
+    y = mpg, 
+    colour = factor(cyl)
+  )) +
+  geom_point() +
+  scale_colour_brewer(palette = "Set2") +
+  labs(
+    x = "<span style = 'color:#93C1DE'>**wt**</span>",
+    y = "<span style = 'color:#2ca25f'>**mpg**</span>",
+    title = "Lower <span style='color:#93C1DE'>**wt**</span> tends to increase the amount of <span style='color:#2ca25f'>**mpg**</span>",
+    colour = ""
+  ) +
+  theme(
+    plot.title = element_markdown(),
+    axis.title.x = element_markdown(),
+    axis.title.y = element_markdown()
+  )
+```
+
+Like I mentioned earlier, you can highlight a particular feature of interest by colouring a particular column or data point, then matching that colour in the title. To only have one of the columns coloured, you need to do a little bit more work, but it is still quite simple.
+
+```{r}
+iris |>
+  group_by(Species) |>
+  summarise(mean_petal_width = mean(Petal.Width), .groups = "drop") |>
+  mutate(
+    colour = c("lightgray", "lightgray", "#0072B2"), 
+    name = glue("<i style='color:{colour}'>{Species}</i>"),
+    name = fct_reorder(name, mean_petal_width)
+  ) |>
+  ggplot(aes(
+    x = name,
+    y = mean_petal_width,
+    fill = colour
+  )) +
+  geom_col() +
+  hrbrthemes::theme_ipsum() +
+  scale_fill_identity() +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = "<span style = 'color: #43a2ca;'>Virginica irises</span> have the largest average sepal width"
+  ) +
+  theme(
+    plot.title = element_markdown(),
+    axis.text.x = element_markdown(),
+    legend.position = "none"
+  )
+```
+
+Lastly, to have all the columns coloured, you essentially do the same thing. You just need to make sure that the `colour` column is a factor, and that the `name` column is ordered.
+
+```{r}
+iris |>
+  group_by(Species) |>
+  summarise(mean_petal_width = mean(Petal.Width), .groups = "drop") |>
+  mutate(
+    colour = c("#91529e", "#009E73", "#0072B2"), #009E73
+    name = glue("<i style='color:{colour}'>{Species}</i>"),
+    name = fct_reorder(name, mean_petal_width)
+  ) |>
+  ggplot(aes(
+    x = name,
+    y = mean_petal_width,
+    fill = colour
+  )) +
+  geom_col() +
+  hrbrthemes::theme_ipsum() +
+  scale_fill_identity() +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = "<span style = 'color: #43a2ca;'>Virginica irises</span> have the largest average sepal width"
+  ) +
+  theme(
+    plot.title = element_markdown(),
+    axis.text.x = element_markdown(),
+    legend.position = "none"
+  )
+```
+
+:::{.callout-caution collapse="true"}
+## Session Info
+
+```{r}
+sessionInfo()
+```
+:::
