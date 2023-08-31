@@ -6,8 +6,11 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Justyn Rodrigues">
+<meta name="dcterms.date" content="2021-12-26">
+<meta name="description" content="Comparing combinations and permutations.">
 
-<title>becausejustyn - personal-blog</title>
+<title>becausejustyn - Combinations-vs-Permutation</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,31 +23,63 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-listing/list.min.js"></script>
-<script src="site_libs/quarto-listing/quarto-listing.js"></script>
-<script src="site_libs/quarto-html/quarto.js"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/quarto-contrib/fontawesome6-0.1.0/all.css" rel="stylesheet">
-<link href="site_libs/quarto-contrib/fontawesome6-0.1.0/latex-fontsize.css" rel="stylesheet">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/quarto-contrib/fontawesome6-0.1.0/all.css" rel="stylesheet">
+<link href="../../site_libs/quarto-contrib/fontawesome6-0.1.0/latex-fontsize.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -65,40 +100,11 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script>
-
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
-
-    const options = {
-      valueNames: ['listing-date','listing-title','listing-author','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description","listing-categories"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../../styles.css">
 </head>
 
 <body class="nav-fixed">
@@ -114,13 +120,13 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" rel="" target="" aria-current="page">
+    <a class="nav-link" href="../../index.html" rel="" target="">
  <span class="menu-text"><i class="fa-solid fa-newspaper" aria-label="newspaper"></i> Blog</span></a>
   </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./about.html" rel="" target="">
+    <a class="nav-link" href="../../about.html" rel="" target="">
  <span class="menu-text"><i class="fa-solid fa-house-user" aria-label="house-user"></i> About</span></a>
   </li>  
   <li class="nav-item compact">
@@ -147,156 +153,276 @@ ul.task-list li input[type="checkbox"] {
     </nav>
 </header>
 <!-- content -->
-<header id="title-block-header" class="quarto-title-block default page-columns page-full">
-  <div class="quarto-title-banner page-columns page-full">
-    <div class="quarto-title column-page-left">
-      <h1 class="title">personal-blog</h1>
-                      </div>
-  </div>
-    
-  
-  <div class="quarto-title-meta">
-
-      
-    
-      
-    </div>
-    
-  
-  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(3)</span></div><div class="category" data-category="Data Viz">Data Viz <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Probability">Probability <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R">R <span class="quarto-category-count">(2)</span></div><div class="category" data-category="ggplot">ggplot <span class="quarto-category-count">(1)</span></div></div></div>
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#possible-variations" id="toc-possible-variations" class="nav-link active" data-scroll-target="#possible-variations">Possible Variations</a></li>
+  <li><a href="#repetition" id="toc-repetition" class="nav-link" data-scroll-target="#repetition">Repetition</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
+  <li><a href="#combinations" id="toc-combinations" class="nav-link" data-scroll-target="#combinations">Combinations</a></li>
+  <li><a href="#permutation" id="toc-permutation" class="nav-link" data-scroll-target="#permutation">Permutation</a></li>
+  <li><a href="#passwords" id="toc-passwords" class="nav-link" data-scroll-target="#passwords">Passwords</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
-<main class="content quarto-banner-title-block column-page-left" id="quarto-document-content">
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Combinations-vs-Permutation</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Probability</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Comparing combinations and permutations.
+  </div>
+</div>
 
 
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Justyn Rodrigues </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">December 26, 2021</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>I do not remember why I wrote this post back in 2021.</p>
+</div>
+</div>
+<section id="possible-variations" class="level2">
+<h2 class="anchored" data-anchor-id="possible-variations">Possible Variations</h2>
+<ul>
+<li>When the order doesn’t matter, it is a <strong>combination</strong>;</li>
+<li>When the order does matter it is a <strong>permutation</strong>.</li>
+</ul>
+</section>
+<section id="repetition" class="level2">
+<h2 class="anchored" data-anchor-id="repetition">Repetition</h2>
+<ul>
+<li>Repetition could be <strong>allowed</strong> in a situation where you wanted to know the character in a password (you can have multiple letters or numbers);</li>
+<li><strong>No repetition</strong> is when there is no replacement in the values such as lotto numbers or selecting a seat (you cannot sit where somebody is already sitting).</li>
+</ul>
+</section>
+<section id="example" class="level2">
+<h2 class="anchored" data-anchor-id="example">Example</h2>
+<p>I had a gift card where two of the numbers were scratched off as I peeled back the scratchy thing. I did not want to contact the store if I could avoid that.</p>
+<p>For example,</p>
+<p><code>A3E# - 3JH# - 45HL</code></p>
+<p>where the hashtags are the two values I can not see clearly. There are <code>36</code> possible values for each (<code>26</code> letters and <code>10</code> numbers), so figuring this out via bruteforce will take a long time. But how many possible numbers could it be?</p>
+<p>Where</p>
+<p><span class="math display">\[
+\text{ Characters to choose from} = n
+\]</span></p>
+<p><span class="math display">\[
+n = 36
+\]</span></p>
+<p><span class="math display">\[
+\text{ Characters selected} = k
+\]</span></p>
+<p><span class="math display">\[
+k = 2
+\]</span></p>
+</section>
+<section id="combinations" class="level2">
+<h2 class="anchored" data-anchor-id="combinations">Combinations</h2>
+<p>Pretending that order does not matter for our code or password, we could calculate the combinations by</p>
+<p><span class="math display">\[
+C_{k}^{\prime}(n) = \binom{n + k  - 1}{k}
+\]</span></p>
+<p><span class="math display">\[
+C_{2}^{\prime}(36) = C_{2}(36 +2 - 1)
+\]</span></p>
+<p><span class="math display">\[
+C_{2}(37) = \binom{37}{2} = \frac{37!}{2!(37 - 2)!} = \frac{37 \cdot 36}{2 \cdot 1} = 666
+\]</span></p>
+<p>If order did not matter and we could not have repetition then we would have</p>
+<p><span class="math display">\[
+C_{k}(n) = \binom{n}{k} = \frac{n!}{k!(n - k)!}
+\]</span></p>
+<p><span class="math display">\[
+C_{2}(36) = \binom{36}{2} = \frac{36!}{2!(36 - 2)!} = \frac{36 \cdot 35}{2 \cdot 1} = 630
+\]</span></p>
+</section>
+<section id="permutation" class="level2">
+<h2 class="anchored" data-anchor-id="permutation">Permutation</h2>
+<p>This problem will be a permutation problem since the order is important since <code>A</code> and <code>5</code> is not the same as <code>5</code> and <code>A</code> due to both values being independent from each other. For example,</p>
+<p><code>A3EA - 3JH5 - 45HL</code> <span class="math inline">\(!=\)</span> <code>A3E5 - 3JHA - 45HL</code></p>
+<p>This is a simple solution since <strong>repetition is allowed</strong>. For example, both values could be the same. As such</p>
+<p><span class="math display">\[
+\text{Permutation} = P
+\]</span></p>
+<p><span class="math display">\[
+P_{k}^{\prime} = n^{k}
+\]</span></p>
+<p><span class="math display">\[
+P_{2}^{\prime} = 36^{2} = 1296
+\]</span></p>
+<p>However, lets just say in this situation <strong>repetition is not allowed</strong>. This would mean if the first character is <code>A</code> then the second character cannot be <code>A</code>. While this may seem like an obscure example in this example, imagine if the code was not entirely scratched off and you were certain that the two values were different from each other.</p>
+<p><span class="math display">\[
+P_{k}(n) = \frac{n!}{(n - k)}!
+\]</span></p>
+<p><span class="math display">\[
+P_{2}(36) = \frac{36!}{(36-2)} = \frac{36!}{34!} = 36 \cdot 35 = 1260
+\]</span></p>
+<p>This should be fairly intuitive since <code>1296 - 1260 = 36</code>.</p>
+</section>
+<section id="passwords" class="level2">
+<h2 class="anchored" data-anchor-id="passwords">Passwords</h2>
+<p>To finish here are the amount of unique combinations for a password of <code>6 characters</code></p>
+<table class="table">
+<colgroup>
+<col style="width: 48%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Characters Used</th>
+<th>Possible Characters</th>
+<th>Unique Permutations</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>a - z</code></td>
+<td>26</td>
+<td>308,915,776</td>
+</tr>
+<tr class="even">
+<td><code>a - z &amp; 0 - 9</code></td>
+<td>36</td>
+<td>2,176,782,336</td>
+</tr>
+<tr class="odd">
+<td><code>a - z &amp; A - Z</code></td>
+<td>52</td>
+<td>19,770,609,664</td>
+</tr>
+<tr class="even">
+<td><code>a - z &amp; A - Z &amp; 0 - 9</code></td>
+<td>62</td>
+<td>56,800,235,584</td>
+</tr>
+<tr class="odd">
+<td><code>a - z &amp; A - Z &amp; 0 - 9 &amp; !@#$%^&amp;*()+-</code></td>
+<td>74</td>
+<td>164,206,490,176</td>
+</tr>
+</tbody>
+</table>
+<p>and <code>8 characters</code></p>
+<table class="table">
+<colgroup>
+<col style="width: 48%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Characters Used</th>
+<th>Possible Characters</th>
+<th>Unique Permutations</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>a - z</code></td>
+<td>26</td>
+<td>208,827,064,576</td>
+</tr>
+<tr class="even">
+<td><code>a - z &amp; 0 - 9</code></td>
+<td>36</td>
+<td>2,821,109,907,456</td>
+</tr>
+<tr class="odd">
+<td><code>a - z &amp; A - Z</code></td>
+<td>52</td>
+<td>53,459,728,531,456</td>
+</tr>
+<tr class="even">
+<td><code>a - z &amp; A - Z &amp; 0 - 9</code></td>
+<td>62</td>
+<td>218,340,105,584,896</td>
+</tr>
+<tr class="odd">
+<td><code>a - z &amp; A - Z &amp; 0 - 9 &amp; !@#$%^&amp;*()+-</code></td>
+<td>74</td>
+<td>899,194,740,203,776</td>
+</tr>
+</tbody>
+</table>
+<p>If you want to calculate these values in <code>R</code> or <code>Python</code> you can simply do it via</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Python</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">crossing</span>(</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># total characters </span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">character_n =</span> <span class="fu">c</span>(<span class="dv">26</span>, <span class="dv">36</span>, <span class="dv">52</span>, <span class="dv">62</span>, <span class="dv">74</span>),</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># password length</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">length =</span> <span class="fu">c</span>(<span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">12</span>), </span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">possible_values =</span> character_n <span class="sc">^</span> length</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>character_n <span class="op">=</span> [<span class="dv">26</span>, <span class="dv">36</span>, <span class="dv">52</span>, <span class="dv">62</span>, <span class="dv">74</span>]</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>length <span class="op">=</span> [<span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">12</span>]</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>pd.DataFrame({</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">'character_n'</span>: character_n,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">'length'</span>: length,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">'possible_values'</span>: [n <span class="op">**</span> l <span class="cf">for</span> n, l <span class="kw">in</span> <span class="bu">zip</span>(character_n, length)]</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">#data = [{'character_n': n, 'length': l, 'possible_values': n ** l} for n, l in zip(character_n, length)]</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">#pd.DataFrame.from_records(data)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
 
 
+</section>
 
-
-
-
-<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
-<div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="R,ggplot" data-listing-date-sort="1648213200000" data-listing-file-modified-sort="1692755144368" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="3">
-<div class="thumbnail">
-<p><a href="./posts/ggplot_colour_text/post.html"> <p class="card-img-top"><img src="posts/ggplot_colour_text/post_files/figure-html/unnamed-chunk-2-1.png"  class="thumbnail-image card-img"/></p> </a></p>
-</div>
-<div class="body">
-<a href="./posts/ggplot_colour_text/post.html">
-<h3 class="no-anchor listing-title">
-Colouring Text in ggplot2
-</h3>
-<div class="listing-subtitle">
-
-</div>
-</a>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('R'); return false;">
-R
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('ggplot'); return false;">
-ggplot
-</div>
-</div>
-<a href="./posts/ggplot_colour_text/post.html">
-<div class="listing-description">
-<p>How to colour text in ggplot.</p>
-</div>
-</a>
-</div>
-<div class="metadata">
-<a href="./posts/ggplot_colour_text/post.html">
-<div class="listing-date">
-Mar 26, 2022
-</div>
-<div class="listing-author">
-Justyn Rodrigues
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="1" data-categories="Probability" data-listing-date-sort="1640437200000" data-listing-file-modified-sort="1693447141002" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6">
-<div class="thumbnail">
-<p><a href="./posts/combinations/post.html"> <div class="listing-item-img-placeholder card-img-top" >&nbsp;</div> </a></p>
-</div>
-<div class="body">
-<a href="./posts/combinations/post.html">
-<h3 class="no-anchor listing-title">
-Combinations-vs-Permutation
-</h3>
-<div class="listing-subtitle">
-
-</div>
-</a>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('Probability'); return false;">
-Probability
-</div>
-</div>
-<a href="./posts/combinations/post.html">
-<div class="listing-description">
-<p>Comparing combinations and permutations.</p>
-</div>
-</a>
-</div>
-<div class="metadata">
-<a href="./posts/combinations/post.html">
-<div class="listing-date">
-Dec 26, 2021
-</div>
-<div class="listing-author">
-Justyn Rodrigues
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="2" data-categories="R,Data Viz" data-listing-date-sort="1612962000000" data-listing-file-modified-sort="1693447206046" data-listing-date-modified-sort="1645621200000" data-listing-reading-time-sort="6">
-<div class="thumbnail">
-<p><a href="./posts/barplots/post.html"> <p class="card-img-top"><img src="posts/barplots/post_files/figure-html/unnamed-chunk-8-1.png"  class="thumbnail-image card-img"/></p> </a></p>
-</div>
-<div class="body">
-<a href="./posts/barplots/post.html">
-<h3 class="no-anchor listing-title">
-Barplots
-</h3>
-<div class="listing-subtitle">
-
-</div>
-</a>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('R'); return false;">
-R
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('Data Viz'); return false;">
-Data Viz
-</div>
-</div>
-<a href="./posts/barplots/post.html">
-<div class="listing-description">
-<p>Some different ways you can adjust barplots.</p>
-</div>
-</a>
-</div>
-<div class="metadata">
-<a href="./posts/barplots/post.html">
-<div class="listing-date">
-Feb 11, 2021
-</div>
-<div class="listing-author">
-Justyn Rodrigues
-</div>
-</a>
-</div>
-</div>
-</div>
-<div class="listing-no-matching d-none">
-No matching items
-</div>
-</div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {

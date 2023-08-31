@@ -2,8 +2,9 @@
   {
     "listing": "/index.html",
     "items": [
-      "/posts/post-with-code/index.html",
-      "/posts/welcome/index.html"
+      "/posts/ggplot_colour_text/post.html",
+      "/posts/combinations/post.html",
+      "/posts/barplots/post.html"
     ]
   }
 ]
