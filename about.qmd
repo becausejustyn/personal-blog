@@ -16,7 +16,7 @@ about:
 
 ---
 
-Some text here.
+Hello!
 
 ::: {.callout-note}
 ## Just keep in mind

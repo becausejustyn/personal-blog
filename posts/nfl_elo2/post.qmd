@@ -193,3 +193,8 @@ plt.show()
 ![Figure](elo_accuracy.png){fig-align="center" width="1200"}
 
 This is why I like Elo so much. Only by using the two scores from each game you are able to achieve around $75\%$ accuracy. Accounting for the home team can bring it close to $79\%$ too. While there may be more complex methods that produce better results, I like to use Elo as an example that sometimes a simple model can achieve fairly good results.
+
+::: {.callout-note}
+## Just keep in mind
+The accuracy should be similar with the betting favourite, but this model is not designed to beat the market, so do not use this for gambling advice. The goal for this was to show how you can easily get a solid model using a simple approach.
+:::
