@@ -2,7 +2,7 @@
 title: "Justyn Rodrigues"
 about:
   template: jolla
-  image: profile_pic.jpeg
+  image: profile1.jpeg 
   links:
     - icon: twitter
       text: Twitter
