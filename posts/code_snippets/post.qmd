@@ -92,3 +92,171 @@ You can also do this with command line, but at this point, I do not find it quic
 ```bash
 find dataset_100 -type f -name '*.png' ! -name '*_seg*' -exec bash -c 'mkdir -p resized_256; convert "{}" -resize 256x256 "resized_256/$(basename "{}" .png)_resized.png"' \;
 ```
+
+## RStudio
+
+This is more specific to the RStudio IDE, but if you want to increase the amount of columns, e.g. more than 50 in `View()`, you could do:
+
+```r
+rstudioapi::writeRStudioPreference("data_viewer_max_columns", 1000L)
+```
+
+There is no limit to the number here. 
+
+## R
+
+Say you want a dataframe as a list, you could simply do
+
+```r
+mtcars |>
+  purrr::pmap(~ c(...))
+```
+
+
+If each element of the output is a dataframe, then `map_dfr` is needed to to row-bind them together:
+
+
+::: {.column-margin}
+Note because we are using `.$` we have to use the `%>%` pipe. R 4.2 allows to do `_$` instead of `.$`, however I use the `magrittr` here for consistency in the code. 
+:::
+
+```r
+mtcars %>%
+  split(.$cyl) %>%
+  map(~ lm(mpg ~ wt, data = .x)) %>%
+  map_dfr(~ as.data.frame(t(as.matrix(coef(.)))))
+```
+
+Say we want to get the correlation for multiple models grouped by a particular variable, it is simple enough
+
+```r
+mtcars %>%
+  split(.$cyl) %>%
+  map(~ lm(mpg ~ wt, data = .x)) %>%
+  map(summary) %>%
+  map_dbl("r.squared")
+```
+
+To make predictions, it will be easier to assign a global variable first, e.g.
+
+```r
+# Split into pieces, fit model to each piece, then predict
+by_cyl <- mtcars %>% 
+  split(.$cyl)
+
+mods <- by_cyl %>% 
+  map(~ lm(mpg ~ wt, data = .))
+  
+map2(mods, by_cyl, predict)
+```
+
+Say we want to get a correlation matrix, we can easily do this using the `corrr` package.
+
+::: {.panel-tabset}
+
+## corrr's correlate
+
+```r
+library(corrr)
+
+mtcars |>
+    dplyr::select(where(is.numeric)) |>
+    dplyr::group_by(cyl) |>
+    dplyr::group_map(~ correlate(.x))
+```
+
+## base cor
+
+```r
+mtcars |>
+  dplyr::select(where(is.numeric)) |>
+  dplyr::group_by(cyl) |>
+  dplyr::group_map(~ cor(.x))
+```
+
+:::
+
+If we want a long version of each correlation by a group, it is fairly simple too.
+
+```r
+mtcars |>
+    group_by(cyl) |>
+    nest() |>
+    mutate(data = map(data, purrr::compose(stretch, correlate))) |>
+    unnest(cols = c(data))
+```
+
+
+
+### LM
+
+Multiple models by a variable
+
+```r
+models <- mtcars %>%
+  split(.$cyl) %>%
+  map(~ lm(mpg ~ wt, data = .))
+  
+# extracting a feature
+models %>%
+  map(summary) %>%
+  map_dbl(~ .$r.squared)
+  
+# or map_dbl("r.squared")
+```
+
+### Across Functions
+
+Across functions are quite helpful for data wrangling. Here are some of my most used ones.
+
+```r
+mtcars |>
+    summarise(across(c(mpg:cyl, vs:carb), n_distinct))
+    
+mtcars |>
+  summarise(across(everything(), n_distinct))
+  
+mtcars |>
+  summarise(across(contains("r"), n_distinct))
+  
+mtcars |>
+  summarise(across(where(is.numeric), n_distinct))
+  
+mtcars |>
+  summarise(across(everything(), ~sum(is.na(.))))
+```
+
+Lastly, say you want to replace `NA` values with 0. You could do this in 2 ways
+
+::: {.panel-tabset}
+
+## Custom Function
+
+```r
+# write a function and then use across with that function
+
+# if the value is NA, replace with 0, else keep it like it is
+replace0 <- function(x) {
+  ifelse(condition = is.na(x), 
+          true = 0, 
+          false = as.numeric(x))
+}
+
+df |>
+  mutate(across(where(is.numeric), replace0))
+```
+
+## Alternative
+
+```r
+df %>%
+  mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, as.numeric(.))))
+```
+
+:::
+
+
+
+
+
+
