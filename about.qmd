@@ -13,6 +13,9 @@ about:
     - icon: github
       text: Github 
       href: https://github.com/becausejustyn
+    - icon: orcid
+      text: ORCID
+      href: https://orcid.org/0000-0001-8980-0685
 
 ---
 
@@ -22,3 +25,5 @@ Hello!
 ## Just keep in mind
 As I have started learning how to make blogs and the front-end side of it, I have made many errors with my blog so there might be a few things broken at the moment. If you notice an problem, feel free to [create an issue](https://github.com/becausejustyn/personal-blog/issues/new) on the {{< fa brands github >}} repo. Thanks!
 :::
+
+[{{< fa brands orcid >}} ORCID](https://orcid.org/0000-0001-8980-0685)
