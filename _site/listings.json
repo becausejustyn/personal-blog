@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/cubic_splines/post.html",
       "/posts/nfl_elo2/post.html",
       "/posts/nfl_elo1/post.html",
       "/posts/nfl_pca_python/post.html",
