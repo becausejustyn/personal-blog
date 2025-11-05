@@ -23,6 +23,8 @@ website:
         href: https://twitter.com/becausejustyn
       - icon: linkedin
         href: https://www.linkedin.com/in/justyn-rodrigues-6b2612231/
+      - icon: orcid
+        href: https://orcid.org/0000-0001-8980-0685
       
 format:
   html:
